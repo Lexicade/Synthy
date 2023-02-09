@@ -1,0 +1,27 @@
+{
+    "irc": {
+        "server": "lexicade.uk",
+        "port": 6600,
+        "nickname": "Synthy",
+        "password": "discord1"
+    },
+    "users": [
+        "JasonFS",
+        "TamazSvr",
+        "wjoe",
+        "lebhome",
+        "Foxy"
+    ],
+    "pairs": [
+        {
+            "irc_channel": "#jerseyesports",
+            "discord_channel": 619676725818949655
+        }
+    ],
+    "webhook": [
+        {
+            "id": 709407592606072842,
+            "key": "pUe7EMGMXIz2FxFg4se9s5NrU2H-vxbR9nPeob4-MONd7_FYCNvJaUsbxWXQaxMQVy7m"
+        }
+    ]
+}

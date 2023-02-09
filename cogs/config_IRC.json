@@ -1,0 +1,23 @@
+{
+    "irc": {
+        "server": "lexicade.uk",
+        "port": 6600,
+        "nickname": "Synthy",
+        "password": "discord1"
+    },
+    "users": [
+        "JasonFS"
+    ],
+    "pairs": [
+        {
+            "irc_channel": "#discord",
+            "discord_channel": 676939843087106066
+        }
+    ],
+    "webhook": [
+        {
+            "id": 676940734112333847,
+            "key": "7TxjLhpmmGWKhTAvfBctiBcdO-T5INVkrweK39B74vH9VHvxhHy3eG_qBh368q4E4v6Z"
+        }
+    ]
+}

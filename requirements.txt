@@ -1,0 +1,12 @@
+psycopg2-binary~=2.9.3
+configparser
+pandas~=1.2.3
+fuzzywuzzy~=0.18.0
+pillow~=8.4.0
+requests~=2.24.0
+wikipedia~=1.4.0
+beautifulsoup4~=4.9.3
+python-dateutil~=2.8.1
+upsidedown~=0.4
+novus~=0.1.4
+ratelimit~=2.2.1
