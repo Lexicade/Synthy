@@ -111,8 +111,9 @@ class ImageCmd(commands.Cog):
         img = await self.get_image(ctx, "image")
         try:
             if img:
-                str_filename = await self.img_edit_add_text(img, top_text, bottom_text, ctx.guild.id)
-                await ctx.send(file=discord.File(open(str_filename, 'rb'), str_filename))
+                img = await self.img_edit_add_text(img, top_text, bottom_text, ctx.guild.id)
+                file = await self.pil_to_discordfile(img)
+                await ctx.send(file=file)
 
             else:
                 emb = await utils.embed(ctx, f"Unable to retrieve image", "I wasn't able to see a image in the recent chat history.")
@@ -366,7 +367,7 @@ class ImageCmd(commands.Cog):
 
     async def img_edit_add_text(self, img, top_text: str, bottom_text: str, guild_id):
         # Define images
-        str_filename = f"./overlays/{guild_id}/tmp_text.png"
+        # str_filename = f"./overlays/{guild_id}/tmp_text.png"
 
         img = await self.img_edit_add_text_write(img, top_text, "top")
         print(f"Success top")
@@ -374,8 +375,8 @@ class ImageCmd(commands.Cog):
         print(f"Success bottom")
 
         # Save Image and return
-        img.save(str_filename)
-        return str_filename
+        # img.save(str_filename)
+        return img
 
     @staticmethod
     async def img_edit_add_text_write(img, input_text, text_pos):
