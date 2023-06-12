@@ -11,9 +11,21 @@ class Wiki(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
+    @commands.command(
+        aliases=[],
+        application_command_meta=commands.ApplicationCommandMeta(
+            options=[
+                discord.ApplicationCommandOption(
+                    name="wiki_search",
+                    description="Search Wikipedia.",
+                    type=discord.ApplicationCommandOptionType.string,
+                    required=True,
+                )
+            ],
+        )
+    )
     @commands.bot_has_permissions(embed_links=True)
-    async def wiki(self, ctx, wiki_search):
+    async def wiki(self, ctx, wiki_search: str):
         """Query Wikipedia."""
         try:
             wiki_result = wikipedia.WikipediaPage(wiki_search)
