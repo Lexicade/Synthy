@@ -60,7 +60,7 @@ class Voice(commands.Cog):
             ],
         )
     )
-    async def name(self, ctx, new_name):
+    async def name(self, ctx, name):
         if not ctx.author.voice:
             emb = await utils.embed(ctx, f"Voice", "You're not connected to a voice channel")
             await ctx.send(embed=emb)
@@ -72,8 +72,8 @@ class Voice(commands.Cog):
             return
 
         try:
-            await ctx.author.voice.channel.edit(name=f"🔊{new_name}")
-            emb = await utils.embed(ctx, f"Voice", f"The name of your voice channel is now is now 🔊{new_name}.")
+            await ctx.author.voice.channel.edit(name=f"🔊 {name}")
+            emb = await utils.embed(ctx, f"Voice", f"The name of your voice channel is now is now 🔊 {name}.")
         except discord.Forbidden as e:
             emb = await utils.embed(ctx, f"Voice", "I don't have permission to edit that channel.")
         except discord.HTTPException as e:
@@ -87,7 +87,7 @@ class Voice(commands.Cog):
         application_command_meta=commands.ApplicationCommandMeta(
             options=[
                 discord.ApplicationCommandOption(
-                    name="name",
+                    name="user_count",
                     description="Set the max users for the voice channel you're in",
                     type=discord.ApplicationCommandOptionType.integer,
                     required=True,
@@ -95,7 +95,7 @@ class Voice(commands.Cog):
             ],
         )
     )
-    async def limit(self, ctx, total_users):
+    async def limit(self, ctx, user_count: int):
         if not ctx.author.voice:
             emb = await utils.embed(ctx, f"Voice", "You're not connected to a voice channel")
             await ctx.send(embed=emb)
@@ -107,7 +107,7 @@ class Voice(commands.Cog):
             return
 
         try:
-            arg = int(total_users)
+            arg = int(user_count)
             if arg < 0 or arg > 99:
                 raise ValueError
             await ctx.author.voice.channel.edit(user_limit=arg)
@@ -139,7 +139,7 @@ class Voice(commands.Cog):
             else:
                 user_name = f"{member.display_name.capitalize()}'s"
 
-            chnl = await after.channel.clone(name=f"🔊{user_name} Chat")
+            chnl = await after.channel.clone(name=f"🔊 {user_name} Chat")
             await member.edit(voice_channel=chnl)
 
         # Check is the club is empty.
