@@ -22,7 +22,7 @@ class Voice(commands.Cog):
                 ),
                 discord.ApplicationCommandOption(
                     name="name",
-                    description="Rename the voice channel",
+                    description="Rename the voice channel you're in",
                     type=discord.ApplicationCommandOptionType.string,
                     required=True,
                 ),
@@ -47,7 +47,19 @@ class Voice(commands.Cog):
         await utils.sql('INSERT INTO "database1".synthy.voice (guild_id, channel_id) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET channel_id = %s;', (ctx.guild.id, channel.id, channel.id,))
         await ctx.send(content=f"I have created {channel.mention} for you.")
 
-    @voice.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
+    @voice.command(
+        aliases=[],
+        application_command_meta=commands.ApplicationCommandMeta(
+            options=[
+                discord.ApplicationCommandOption(
+                    name="name",
+                    description="Rename the voice channel you're in",
+                    type=discord.ApplicationCommandOptionType.string,
+                    required=True,
+                )
+            ],
+        )
+    )
     async def name(self, ctx, new_name):
         if not ctx.author.voice:
             emb = await utils.embed(ctx, f"Voice", "You're not connected to a voice channel")
@@ -70,7 +82,19 @@ class Voice(commands.Cog):
             emb = await utils.embed(ctx, f"Voice", "What you entered wasn't able to be used for this setting.")
         await ctx.send(embed=emb)
 
-    @voice.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
+    @voice.command(
+        aliases=[],
+        application_command_meta=commands.ApplicationCommandMeta(
+            options=[
+                discord.ApplicationCommandOption(
+                    name="name",
+                    description="Set the max users for the voice channel you're in",
+                    type=discord.ApplicationCommandOptionType.integer,
+                    required=True,
+                )
+            ],
+        )
+    )
     async def limit(self, ctx, total_users):
         if not ctx.author.voice:
             emb = await utils.embed(ctx, f"Voice", "You're not connected to a voice channel")
