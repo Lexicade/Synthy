@@ -10,7 +10,31 @@ class Voice(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(invoke_without_command=True)
+    @commands.group(
+        aliases=[],
+        application_command_meta=commands.ApplicationCommandMeta(
+            options=[
+                discord.ApplicationCommandOption(
+                    name="setup",
+                    description="Create the setup channel",
+                    type=discord.ApplicationCommandOptionType.string,
+                    required=True,
+                ),
+                discord.ApplicationCommandOption(
+                    name="name",
+                    description="Rename the voice channel",
+                    type=discord.ApplicationCommandOptionType.string,
+                    required=True,
+                ),
+                discord.ApplicationCommandOption(
+                    name="limit",
+                    description="Set the max users for a channel",
+                    type=discord.ApplicationCommandOptionType.string,
+                    required=True,
+                )
+            ],
+        )
+    )
     async def voice(self, ctx, *arg):
         """Allow Synthy to create/delete channels as needed to keep things tidy"""
 
@@ -86,14 +110,19 @@ class Voice(commands.Cog):
         # Figure out if this guy will cause a scene in the club
         if after.channel is not None and after.channel.name.lower() == "vc foyer":
             # Let the guy in, but make sure he ain't got a gun
-            chnl = await after.channel.clone(name=f"🔊{member.name}'s Chat", reason="User joined the lobby channel.")
+            if member.display_name.capitalize().endswith("s"):
+                user_name = f"{member.display_name.capitalize()}'"
+            else:
+                user_name = f"{member.display_name.capitalize()}'s"
+
+            chnl = await after.channel.clone(name=f"🔊{user_name} Chat")
             await member.edit(voice_channel=chnl)
 
         # Check is the club is empty.
         elif before.channel is not None and "🔊" in before.channel.name:
             # Last One Out, Get the Lights. #FinishTheFight
             if len(before.channel.members) == 0:
-                await before.channel.delete(reason="Last user left the channel.")
+                await before.channel.delete()
 
 
 def setup(bot):
