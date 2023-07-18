@@ -534,7 +534,7 @@ class FFXIVCharacter:
         self.blackmage = {**data['classjob']['blackmage']['blackmage'], **{'max_level': 90}}
         self.summoner = {**data['classjob']['summoner']['summoner'], **{'max_level': 90}}
         self.redmage = {**data['classjob']['redmage']['redmage'], **{'max_level': 90}}
-        self.bluemage = {**data['classjob']['bluemage']['bluemage'], **{'max_level': 70}}
+        self.bluemage = {**data['classjob']['bluemage']['bluemage'], **{'max_level': 80}}
         self.carpenter = {**data['classjob']['carpenter']['carpenter'], **{'max_level': 90}}
         self.blacksmith = {**data['classjob']['blacksmith']['blacksmith'], **{'max_level': 90}}
         self.armorer = {**data['classjob']['armorer']['armorer'], **{'max_level': 90}}
