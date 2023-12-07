@@ -29,7 +29,7 @@ class DiscordInfo(commands.Cog):
             except discord.HTTPException as e:
                 print(f"HTTPException error during initial invite info: {e}")
 
-    @commands.group(invoke_without_command=True)
+    @commands.group(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
     async def info(self, ctx):
         """Get information about users or the Discord server."""
         prefix = await self.bot.get_prefix(ctx.message)
@@ -38,16 +38,31 @@ class DiscordInfo(commands.Cog):
         emb = await utils.field(emb, f"{prefix[2]}info user [username]", "Provides information about the given user.")
         await ctx.send(embed=emb)
 
-    @info.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def user(self, ctx, *, member: discord.Member):
+    @commands.defer(ephemeral=False)
+    @info.command(
+        aliases=[],
+        application_command_meta=commands.ApplicationCommandMeta(
+            options=[
+                discord.ApplicationCommandOption(
+                    name="user",
+                    description="Tells you some info about the member.",
+                    type=discord.ApplicationCommandOptionType.user,
+                    required=True,
+                ),
+            ]
+        )
+    )
+    async def user(self, ctx, user: discord.Member):
         """Tells you some info about the member."""
-        emb = await utils.embed(ctx, "", "", thumbnail=member.avatar.url)
-        emb = await utils.author(emb, member.name)
-        emb = await utils.field(emb, "Roles:", value=str(len(member.roles)-1))
-        emb = await utils.field(emb, "Created At:", value=member.created_at.strftime("%d %B %Y - %H:%M:%S"))
-        emb = await utils.field(emb, "Joined:", value=member.joined_at.strftime("%d %B %Y - %H:%M:%S"))
-        emb = await utils.field(emb, "Top Role:", value=member.top_role)
-        emb = await utils.field(emb, "Bot:", value=member.bot)
+        print(f"member")
+        print(f"member: {user}")
+        emb = await utils.embed(ctx, "", "", thumbnail=user.avatar.url)
+        emb = await utils.author(emb, user.name)
+        emb = await utils.field(emb, "Roles:", value=str(len(user.roles)-1))
+        emb = await utils.field(emb, "Created At:", value=user.created_at.strftime("%d %B %Y - %H:%M:%S"))
+        emb = await utils.field(emb, "Joined:", value=user.joined_at.strftime("%d %B %Y - %H:%M:%S"))
+        emb = await utils.field(emb, "Top Role:", value=user.top_role)
+        emb = await utils.field(emb, "Bot:", value=user.bot)
         # emb = await utils.thumb(emb, member.avatar_url)
         await ctx.send(embed=emb)
 

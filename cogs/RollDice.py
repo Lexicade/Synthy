@@ -33,7 +33,19 @@ class RollDice(commands.Cog):
         global extension_name
         extension_name = "[Roll Dice] "
 
-    @commands.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
+    @commands.command(
+        aliases=[],
+        application_command_meta=commands.ApplicationCommandMeta(
+            options=[
+                discord.ApplicationCommandOption(
+                    name="arg",
+                    description="Roll whatever sided dice you need to roll.",
+                    type=discord.ApplicationCommandOptionType.string,
+                    required=False,
+                )
+            ],
+        )
+    )
     async def roll(self, ctx, *, arg):
         """Roll whatever sided dice you need to roll."""
         demo_roll = re.sub(r'[^\d+\-d-d]', " ", arg)
