@@ -1,22 +1,17 @@
-import asyncio
-
 from discord.ext import commands
 import discord
+import random
 import logging
 import importlib
 import utils
-import random
-import psycopg2
 import os
-import json
-import configparser
 importlib.reload(utils)
 logging.basicConfig(level=logging.INFO)
 intents = discord.Intents.default()
 intents.members = True
+intents.messages = True
+intents.message_content = True
 
-
-# bot = commands.Bot(command_prefix=get_pre, intents=intents)
 bot = commands.Bot(command_prefix="!", intents=intents)
 bot.remove_command("help")
 
@@ -27,10 +22,10 @@ async def on_ready():
     print(f"Discord.py version: {discord.__version__}")
     print("------")
 
-    bot.load_extension(f"cogs.ExtensionLoader")
+    await bot.load_extension(f"cogs.ExtensionLoader")
 
     # Add 'playing' status
-    random_games = ['Breath of the Wild 2', 'Metroid Prime 4', 'Bayonetta 3', 'Hollow Knight: Silksong', 'Overwatch 2', 'Path of Exile 2', 'Vampire: The Masquerade – Bloodlines 2', 'Beyond Good And Evil 2']
+    random_games = ['Metroid Prime 4', 'Hollow Knight: Silksong', 'Path of Exile 2', 'Vampire: The Masquerade – Bloodlines 2', 'Beyond Good And Evil 2']
     random_game = random.choice(random_games)
 
     await bot.change_presence(status=discord.Status.online, activity=discord.Game(name=random_game))
@@ -42,10 +37,11 @@ async def on_message(message: discord.Message):
     words = message.content.split(" ")
     first_word = words[0].lower()
 
-    if first_word.startswith(prefix) and first_word.replace(prefix, "") in ['load', 'unload', 'reload', 'slashload', 'slashunload']:
+    if first_word.startswith(prefix) and first_word.replace(prefix, "") in ['load', 'unload', 'reload', 'slashload', 'slashunload', 'debugsync']:
         await bot.invoke(await bot.get_context(message))
 
-bot.run(os.environ.get('discord_bot_token'))
+# bot.run(os.environ.get('discord_bot_token'))
+bot.run(os.environ.get('discord_bot_token_dev'))
 
 # Thanks to:
 # jagw#6619 - Assisted with command testing

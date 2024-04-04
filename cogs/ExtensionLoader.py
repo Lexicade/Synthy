@@ -1,20 +1,17 @@
 from discord.ext import commands, tasks
 import discord
-import traceback, sys
+import traceback
 import configparser
 import os
 import json
 import importlib
 import utils
-import random
 importlib.reload(utils)
 
 
 class ExtensionLoader(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # global extension_name
-        # extension_name = "Extension Loader"
         self.init_load_ext.start()
 
     @tasks.loop(count=1)
@@ -28,11 +25,12 @@ class ExtensionLoader(commands.Cog):
             if item != "ExtensionLoader":
                 # await self.manage_ext("load", item)
                 try:
-                    self.bot.load_extension(f"cogs.{item}")
+                    await self.bot.load_extension(f"cogs.{item}")
                 except:
                     True
 
-    def bot_admin_check(ctx):
+    @staticmethod
+    def bot_admin_check(ctx: discord.ext.commands.Context):
         # Read config
         config = configparser.ConfigParser()
         config.read('config.ini')
@@ -48,11 +46,11 @@ class ExtensionLoader(commands.Cog):
     async def manage_ext(self, action: str, extension: str, ctx):
         try:
             if action == "load":
-                self.bot.load_extension(f"cogs.{extension}")
+                await self.bot.load_extension(f"cogs.{extension}")
                 await ctx.message.add_reaction("✅")
 
             elif action == "reload":
-                self.bot.reload_extension(f"cogs.{extension}")
+                await self.bot.reload_extension(f"cogs.{extension}")
 
                 if self.bot.user.id == 459056626377293824:
                     await self.bot.register_application_commands()
@@ -108,6 +106,20 @@ class ExtensionLoader(commands.Cog):
         await self.manage_ext("load", extension_name, ctx)
 
     @commands.check(bot_admin_check)
+    @commands.command(pass_context=True, hidden=True)
+    async def sync(self, ctx):
+        # await discord.app_commands.CommandTree.sync(self.bot)
+        await self.bot.tree.sync()
+        await ctx.message.add_reaction("✅")
+
+    @commands.check(bot_admin_check)
+    @commands.command(pass_context=True, hidden=True)
+    async def debugsync(self, ctx):
+        # await discord.app_commands.CommandTree.sync(self.bot)
+        await self.bot.tree.sync(guild=ctx.guild)
+        await ctx.message.add_reaction("🧩")
+
+    @commands.check(bot_admin_check)
     @commands.bot_has_permissions(embed_links=True, add_reactions=True)
     @commands.command(pass_context=True, hidden=True)
     async def reload(self, ctx, *, extension_name):
@@ -134,11 +146,12 @@ class ExtensionLoader(commands.Cog):
     @commands.check(bot_admin_check)
     @commands.command(pass_context=True, hidden=True)
     async def slashload(self, ctx):
-        await ctx.message.add_reaction("⌛")
-        if self.bot.user.id == 459056626377293824:
+        if self.bot.user.id == 459056626377293824 or self.bot.user.id == 1136248096263778334:
+            await ctx.message.add_reaction("⌛")
             await self.bot.register_application_commands()
 
         elif self.bot.user.id == 900672193543942144:
+            await ctx.message.add_reaction("🔧")
             guild = self.bot.get_guild(578293484843434061)
             await self.bot.register_application_commands(guild=guild)
 
@@ -170,7 +183,7 @@ class ExtensionLoader(commands.Cog):
         elif not (isinstance(error, commands.CommandNotFound)):
             jokes = ["99 bugs in the code, 99 bugs in the code. You take one down, patch it around... 129 bugs in the code.",
                      "I asked my master why he writes bad code. He said \"No comment.\"",
-                     "A code tester walks into the bar and orders 2764389237498 beers."]
+                     "A code tester walks into the bar and orders 2,147,483,648 beers."]
 
             # Create user error
             log = "".join(traceback.format_exception(type(error), error, error.__traceback__))
@@ -181,7 +194,8 @@ class ExtensionLoader(commands.Cog):
             await ctx.send(embed=emb)
 
             # Create developer error
-            err_chnl = self.bot.get_channel(740267554416885842)
+            err_chnl = self.bot.get_channel(740267554416885842)  # Synthy Server / #debug-synthy-beta
+            # err_chnl = self.bot.get_channel(1138216297046491247)  # Lexi Server 2 / #john
 
             err_body_details = [f'Guild: {ctx.guild.name} ({ctx.guild.id})',
                                 f'Channel: {ctx.channel.name} ({ctx.channel.id})',
@@ -291,14 +305,14 @@ class ExtensionLoader(commands.Cog):
         return "Successfully checked cogs"
 
 
-def setup(bot):
+async def setup(bot):
     # try:
     print("INFO --- Loading Extensions --- ", end="\n")
-    bot.add_cog(ExtensionLoader(bot))
+    await bot.add_cog(ExtensionLoader(bot))
     print("INFO --- Extensions Loaded --- ", end="\n")
     # except Exception as e:
     #     print(e)
 
 
-def teardown(bot):
+async def teardown(bot):
     print("INFO: Unloading [ExtensionLoader]")
