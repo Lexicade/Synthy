@@ -40,8 +40,8 @@ async def on_message(message: discord.Message):
     if first_word.startswith(prefix) and first_word.replace(prefix, "") in ['load', 'unload', 'reload', 'slashload', 'slashunload', 'sync']:
         await bot.invoke(await bot.get_context(message))
 
-# bot.run(os.environ.get('discord_bot_token'))
-bot.run(os.environ.get('discord_bot_token_dev'))
+bot.run(os.environ.get('discord_bot_token'))
+# bot.run(os.environ.get('discord_bot_token_dev'))
 
 # Thanks to:
 # jagw#6619 - Assisted with command testing
