@@ -1,3 +1,5 @@
+import sys
+
 from discord.ext import commands, tasks
 import discord
 import traceback
@@ -9,7 +11,7 @@ import utils
 importlib.reload(utils)
 
 
-class ExtensionLoader(commands.Cog):
+class ExtensionLoader(commands.Cog, name="ExtensionLoader"):
     def __init__(self, bot):
         self.bot = bot
         self.init_load_ext.start()
@@ -52,18 +54,19 @@ class ExtensionLoader(commands.Cog):
             elif action == "reload":
                 await self.bot.reload_extension(f"cogs.{extension}")
 
-                if self.bot.user.id == 459056626377293824:
+                if self.bot.user.id == 459056626377293824:  # Synthy
                     await self.bot.register_application_commands()
 
-                elif self.bot.user.id == 900672193543942144:
-                    guild = self.bot.get_guild(578293484843434061)
-                    await self.bot.register_application_commands(guild=guild)
+                elif self.bot.user.id == 900672193543942144:  # Synthy Beta
+                    # guild = self.bot.get_guild(578293484843434061)  # Synthy (Server)
+                    # await self.bot.tree.sync(guild=ctx.guild)
+                    print(await self.bot.tree.sync())
                     await ctx.message.add_reaction("⚔")
 
                 await ctx.message.add_reaction("✅")
 
             elif action == "unload" and os.path.splitext(os.path.basename(__file__))[0] != extension:
-                self.bot.unload_extension(f"cogs.{extension}")
+                await self.bot.unload_extension(f"cogs.{extension}")
                 await ctx.message.add_reaction("✅")
 
             return
@@ -81,8 +84,10 @@ class ExtensionLoader(commands.Cog):
             emb = await utils.embed(ctx, f"{extension}", f"There is not entry point in extension `{e.name}`.")
 
         except discord.ext.commands.errors.ExtensionFailed as e:
-            emb = await utils.embed(ctx, f"Failed to load {extension}", f"There is an execution error in `{e.name}`.\n"+
-                                    f"{e.original}")
+            emb = await utils.embed(ctx, f"Failed to load {extension}", f"There is an execution error in `{e.name}`.\n{e.original}")
+
+            traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+
         await ctx.send(embed=emb)
 
     @commands.check(bot_admin_check)
@@ -109,15 +114,16 @@ class ExtensionLoader(commands.Cog):
     @commands.command(pass_context=True, hidden=True)
     async def sync(self, ctx):
         # await discord.app_commands.CommandTree.sync(self.bot)
-        await self.bot.tree.sync()
+        print(await self.bot.tree.sync())
         await ctx.message.add_reaction("✅")
 
     @commands.check(bot_admin_check)
     @commands.command(pass_context=True, hidden=True)
-    async def debugsync(self, ctx):
+    async def sync(self, ctx):
         # await discord.app_commands.CommandTree.sync(self.bot)
-        await self.bot.tree.sync(guild=ctx.guild)
+        eggies = await self.bot.tree.sync(guild=ctx.guild)
         await ctx.message.add_reaction("🧩")
+        print(f"SYNC: {eggies}")
 
     @commands.check(bot_admin_check)
     @commands.bot_has_permissions(embed_links=True, add_reactions=True)
@@ -153,7 +159,8 @@ class ExtensionLoader(commands.Cog):
         elif self.bot.user.id == 900672193543942144:
             await ctx.message.add_reaction("🔧")
             guild = self.bot.get_guild(578293484843434061)
-            await self.bot.register_application_commands(guild=guild)
+            await self.bot.tree.sync(guild=ctx.guild)
+            # await self.bot.register_application_commands(guild=guild)
 
         await ctx.message.add_reaction("✅")
 

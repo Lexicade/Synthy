@@ -73,10 +73,10 @@ async def notice(title, message, colour="blue", footer=None):
     return emb
 
 
-async def embed(ctx, title, message, thumbnail=None, colour="blue", footer="", url="", image=None):
+async def embed(interaction: discord.Interaction, title, message, thumbnail=None, colour="blue", footer="", url="", image=None):
     embed_colour = await get_colour(colour)
     emb = discord.Embed(title=title, description=message, url=url, colour=embed_colour)
-    emb.set_footer(text=f"Requested by {ctx.author}. {footer}", icon_url=ctx.author.display_avatar)
+    emb.set_footer(text=f"Requested by {interaction.user}. {footer}", icon_url=interaction.user.display_avatar)
 
     if image:
         emb.set_image(url=image)

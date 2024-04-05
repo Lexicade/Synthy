@@ -1,4 +1,5 @@
 from discord.ext import commands
+from discord.app_commands import tree
 from discord import app_commands
 import discord
 import importlib
@@ -18,34 +19,34 @@ class Voice(commands.GroupCog, name="voice", description="Allow Synthy to create
 
     @commands.has_permissions(administrator=True)
     @app_commands.command(name='setup', description='Create the initial voice channel')
-    async def setup(self, ctx):
+    async def setup(self, interaction: discord.Interaction):
         """Create the initial voice channel"""
-        channel: discord.VoiceChannel = await ctx.guild.create_voice_channel(name="VC Foyer")
-        await utils.sql('INSERT INTO "database1".synthy.voice (guild_id, channel_id) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET channel_id = %s;', (ctx.guild.id, channel.id, channel.id,))
-        await ctx.send(content=f"I have created {channel.mention} for you.", ephemeral=True)
+        channel: discord.VoiceChannel = await interaction.guild.create_voice_channel(name="VC Foyer")
+        await utils.sql('INSERT INTO "database1".synthy.voice (guild_id, channel_id) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET channel_id = %s;', (interaction.guild.id, channel.id, channel.id,))
+        await interaction.response.send_message(content=f"I have created {channel.mention} for you.", ephemeral=True)
 
     @app_commands.command(name='name', description='Name a voice channel')
-    async def name(self, ctx, name: str):
-        if not ctx.author.voice:
-            emb = await utils.embed(ctx, f"Voice", "You're not connected to a voice channel")
-            await ctx.send(embed=emb)
+    async def name(self, interaction: discord.Interaction, name: str):
+        if not interaction.user.voice:
+            emb = await utils.embed(interaction, f"Voice", "You're not connected to a voice channel")
+            await interaction.response.send_message(embed=emb)
             return
 
-        elif not str(ctx.author.voice.channel.name).startswith("🔊"):
-            emb = await utils.embed(ctx, f"Voice", "The voice channel you're in isn't one I should touch.")
-            await ctx.send(embed=emb)
+        elif not str(interaction.user.voice.channel.name).startswith("🔊"):
+            emb = await utils.embed(interaction, f"Voice", "The voice channel you're in isn't one I should touch.")
+            await interaction.response.send_message(embed=emb)
             return
 
         try:
-            await ctx.author.voice.channel.edit(name=f"🔊 {name}")
-            emb = await utils.embed(ctx, f"Voice", f"The name of your voice channel is now is now 🔊 {name}.")
+            await interaction.user.voice.channel.edit(name=f"🔊 {name}")
+            emb = await utils.embed(interaction, f"Voice", f"The name of your voice channel is now is now 🔊 {name}.")
         except discord.Forbidden as e:
-            emb = await utils.embed(ctx, f"Voice", "I don't have permission to edit that channel.")
+            emb = await utils.embed(interaction, f"Voice", "I don't have permission to edit that channel.")
         except discord.HTTPException as e:
-            emb = await utils.embed(ctx, f"Voice", "I wasn't able to edit that channel, try this again. If you keep seeing this please let my [code slave](https://discord.gg/bDAa7cu) know.")
+            emb = await utils.embed(interaction, f"Voice", "I wasn't able to edit that channel, try this again. If you keep seeing this please let my [code slave](https://discord.gg/bDAa7cu) know.")
         except discord.InvalidData as e:
-            emb = await utils.embed(ctx, f"Voice", "What you entered wasn't able to be used for this setting.")
-        await ctx.send(embed=emb)
+            emb = await utils.embed(interaction, f"Voice", "What you entered wasn't able to be used for this setting.")
+        await interaction.response.send_message(embed=emb)
 
     @app_commands.command(name='limit')
     async def limit(self, ctx, user_count: int):

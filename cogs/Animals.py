@@ -1,4 +1,5 @@
 from discord.ext import commands
+from discord import app_commands
 import discord
 import importlib
 import requests
@@ -11,21 +12,18 @@ class Animals(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.defer(ephemeral=False)
-    @commands.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def dog(self, ctx):
+    @app_commands.command(name='dog', description="Get a dog picture!")
+    async def dog(self, interaction: discord.Interaction):
         """Get a dog picture!"""
         obj_dog = await self.get_request("https://dog.ceo/api/breeds/image/random")
-        emb = await utils.embed(ctx, "Random Dog:", "", image=obj_dog["message"])
-        await ctx.send(embed=emb)
+        emb = await utils.embed(interaction, "Random Dog:", "", image=obj_dog["message"])
+        await interaction.response.send_message(embed=emb, ephemeral=False)
 
-    @commands.defer(ephemeral=False)
-    @commands.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def cat(self, ctx):
-        """Get a cat picture!"""
+    @app_commands.command(name='cat', description="Get a cat picture!")
+    async def cat(self, interaction: discord.Interaction):
         obj_cat = await self.get_request("https://api.thecatapi.com/v1/images/search")
-        emb = await utils.embed(ctx, "Random Cat:", "", image=obj_cat[0]["url"])
-        await ctx.send(embed=emb)
+        emb = await utils.embed(interaction, "Random Cat:", "", image=obj_cat[0]["url"])
+        await interaction.response.send_message(embed=emb, ephemeral=False)
 
     @staticmethod
     async def get_request(url):
@@ -36,11 +34,11 @@ class Animals(commands.Cog):
         else:
             return None
 
-def setup(bot):
+async def setup(bot):
     print("INFO: Loading [Animals]... ", end="")
-    bot.add_cog(Animals(bot))
+    await bot.add_cog(Animals(bot))
     print("Done!")
 
 
-def teardown(bot):
+async def teardown(bot):
     print("INFO: Unloading [Animals]")

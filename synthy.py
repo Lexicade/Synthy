@@ -37,7 +37,7 @@ async def on_message(message: discord.Message):
     words = message.content.split(" ")
     first_word = words[0].lower()
 
-    if first_word.startswith(prefix) and first_word.replace(prefix, "") in ['load', 'unload', 'reload', 'slashload', 'slashunload', 'debugsync']:
+    if first_word.startswith(prefix) and first_word.replace(prefix, "") in ['load', 'unload', 'reload', 'slashload', 'slashunload', 'sync']:
         await bot.invoke(await bot.get_context(message))
 
 # bot.run(os.environ.get('discord_bot_token'))

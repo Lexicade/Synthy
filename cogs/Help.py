@@ -1,4 +1,5 @@
 from discord.ext import commands
+from discord import app_commands
 import discord
 import importlib
 import utils
@@ -11,9 +12,8 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(usage="!help", aliases=['commands'], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def help(self, ctx):
-        """Shows this help message."""
+    @app_commands.command(name='help', description="Shows this help message.")
+    async def help(self, interaction: discord.Interaction):
         str_cmds = ""
         cmds = {}
 
@@ -29,8 +29,8 @@ class Help(commands.Cog):
         for cmd in cmds:
             str_cmds = f"{str_cmds}\n•**{cmd}** - {cmds[cmd]['help']}"
 
-        emb = await utils.embed(ctx, "Help commands", str_cmds)
-        await ctx.send(embed=emb)
+        emb = await utils.embed(interaction, "Help commands", str_cmds)
+        await interaction.response.send_message(embed=emb)
 
 
 async def pagify(self, input, items_per_page, page_wanted=1):
@@ -50,11 +50,11 @@ async def pagify(self, input, items_per_page, page_wanted=1):
     return return_list
 
 
-def setup(bot):
+async def setup(bot):
     print("INFO: Loading [Help]... ", end="")
-    bot.add_cog(Help(bot))
+    await bot.add_cog(Help(bot))
     print("Done!")
 
 
-def teardown(bot):
+async def teardown(bot):
     print("INFO: Unloading [Help]")
