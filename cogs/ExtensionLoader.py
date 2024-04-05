@@ -53,16 +53,8 @@ class ExtensionLoader(commands.Cog, name="ExtensionLoader"):
 
             elif action == "reload":
                 await self.bot.reload_extension(f"cogs.{extension}")
-
-                if self.bot.user.id == 459056626377293824:  # Synthy
-                    await self.bot.register_application_commands()
-
-                elif self.bot.user.id == 900672193543942144:  # Synthy Beta
-                    # guild = self.bot.get_guild(578293484843434061)  # Synthy (Server)
-                    # await self.bot.tree.sync(guild=ctx.guild)
-                    print(await self.bot.tree.sync())
-                    await ctx.message.add_reaction("⚔")
-
+                await ctx.message.add_reaction("⚔")
+                print(await self.bot.tree.sync())
                 await ctx.message.add_reaction("✅")
 
             elif action == "unload" and os.path.splitext(os.path.basename(__file__))[0] != extension:

@@ -77,6 +77,7 @@ class Voice(commands.GroupCog, name="voice", description="Allow Synthy to create
         await ctx.send(embed=emb)
 
     @commands.Cog.listener()
+    @commands.has_permissions(manage_channels=True)
     async def on_voice_state_update(self, member: discord.Member, before, after):
         # Ahh! Shit I'm not ready!
         if not self.bot.is_ready():
