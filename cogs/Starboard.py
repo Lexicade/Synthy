@@ -1,6 +1,7 @@
 import re
 
 from discord.ext import commands
+from discord import app_commands
 import discord
 import importlib
 import utils
@@ -30,7 +31,7 @@ colours = {"default": 0,
            "greyple": 0x99aab5}
 
 
-class Starboard(commands.Cog):
+class Starboard(commands.GroupCog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -54,7 +55,7 @@ class Starboard(commands.Cog):
                     # Check if message exists in Starboard
                     async for sb_msg in obj_chnl_sb.history(limit=100, before=None, after=None):
                         for embed in sb_msg.embeds:
-                            if embed.description == discord.embeds.EmptyEmbed:
+                            if embed.description is None:
                                 continue
 
                             matches = re.findall(r'[[A-Za-z]+!]\(https?://[\w./]+\)', embed.description)
@@ -111,73 +112,40 @@ class Starboard(commands.Cog):
                                 if reaction.emoji == "⭐" and reaction.count < int(sql_star[0]['min_stars']):
                                     await sb_msg.delete()
 
-    @commands.group(
-        invoke_without_command=True,
-        aliases=[],
-        application_command_meta=commands.ApplicationCommandMeta(
-            options=[
-                discord.ApplicationCommandOption(
-                    name="channel",
-                    description="Set the Staboard channel",
-                    type=discord.ApplicationCommandOptionType.string,
-                    required=True,
-                ),
-                discord.ApplicationCommandOption(
-                    name="stars",
-                    description="Set the minimum stars to post to the Starboard channel",
-                    type=discord.ApplicationCommandOptionType.integer,
-                    required=True,
-                ),
-            ]
-        )
-    )
-    async def starboard(self, ctx):
+    @commands.group()
+    async def starboard(self, interaction: discord.Interaction):
         """Let your community star it's best comments."""
 
-    @commands.defer(ephemeral=True)
-    @starboard.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
+    @app_commands.command(name='channel', description='Set the starboard channel')
     @commands.has_permissions(administrator=True)
-    async def channel(self, ctx):
-        await utils.sql('INSERT INTO starboard (guild_id, sb_channel) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET sb_channel = %s', (ctx.guild.id, ctx.channel.id, ctx.channel.id,))
-        await ctx.send(f"The Starboard channel has been set to #{ctx.channel.mention}.")
+    async def channel(self, interaction: discord.Interaction):
+        await utils.sql('INSERT INTO starboard (guild_id, sb_channel) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET sb_channel = %s', (interaction.guild.id, interaction.channel.id, interaction.channel.id,))
+        await interaction.response.send_message(f"The Starboard channel has been set to #{interaction.channel.mention}.", ephemeral=True)
 
-    @commands.defer(ephemeral=True)
-    @starboard.command(
-        aliases=[],
-        application_command_meta=commands.ApplicationCommandMeta(
-            options=[
-                discord.ApplicationCommandOption(
-                    name="stars",
-                    description="Set the minimum stars to post to the Starboard channel",
-                    type=discord.ApplicationCommandOptionType.integer,
-                    required=True,
-                )
-            ],
-        )
-    )
+    @app_commands.command(name='stars', description='Set the minimum stars required')
     @commands.has_permissions(administrator=True)
-    async def stars(self, ctx, stars: int):
+    async def stars(self, interaction: discord.Interaction, stars: int):
         try:
             arg_int = int(stars)
 
         except Exception as e:
-            await ctx.send(f"Please provide a valid number.")
+            await interaction.response.send_message(f"Please provide a valid number.", ephemeral=True)
             print(f"Starboard - stars - Error: {e}")
             return
 
         if arg_int <= 0:
-            await ctx.send(f"The minimum stars must be at least 1`.")
+            await interaction.response.send_message(f"The minimum stars must be at least 1`.", ephemeral=True)
             return
 
-        await utils.sql('INSERT INTO starboard (guild_id, min_stars) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET min_stars = %s', (ctx.guild.id, arg_int, arg_int,))
-        await ctx.send(f"The minimum stars required has been set to {arg_int}.")
+        await utils.sql('INSERT INTO starboard (guild_id, min_stars) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET min_stars = %s', (interaction.guild.id, arg_int, arg_int,))
+        await interaction.response.send_message(f"The minimum stars required has been set to {arg_int}.", ephemeral=True)
 
 
-def setup(bot):
+async def setup(bot):
     print("INFO: Loading [Starboard]... ", end="")
-    bot.add_cog(Starboard(bot))
+    await bot.add_cog(Starboard(bot))
     print("Done!")
 
 
-def teardown(bot):
+async def teardown(bot):
     print("INFO: Unloading [Starboard]")
