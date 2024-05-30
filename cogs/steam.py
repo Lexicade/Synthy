@@ -1,4 +1,5 @@
 from discord.ext import commands
+from discord import app_commands
 from collections import OrderedDict
 import os
 import discord
@@ -57,24 +58,10 @@ class Steam(commands.Cog):
         # if ctx.channel.permissions_for(ctx.me).manage_messages:
         #     await ctx.message.delete()
 
-    @commands.command(
-        aliases=[],
-        application_command_meta=commands.ApplicationCommandMeta(
-            options=[
-                discord.ApplicationCommandOption(
-                    name="game_name",
-                    description="Search for a game on the Steam store.",
-                    type=discord.ApplicationCommandOptionType.string,
-                    required=True,
-                )
-            ],
-        )
-    )
-    @commands.defer(ephemeral=False)
-    async def steam(self, ctx, *, game_name):
-        """Search for a game on the Steam store."""
-        # await ctx.channel.trigger_typing()
-        # await ctx.interaction.edit_original_message(content="Searching for game...")
+    @app_commands.command(name='steam', description='Search for a game on the Steam store.')
+    async def steam(self, interaction: discord.Interaction, game_name: str):
+        # await interaction.channel.trigger_typing()
+        await interaction.response.send_message(content="Searching for the best match. One moment!")
         search = " ".join(game_name)
         start_time = time.time()
         # Get live or cached JSON
@@ -82,22 +69,24 @@ class Steam(commands.Cog):
 
         # Get 1 match form the given search term
         new_list = await self.get_best_matches(search, 1, json_data)
+        print("1")
 
         if new_list != {}:
+            print("2")
             # Collect data for the given AppID
             message_output = await self.steam_by_app_id(new_list["1"]["app_id"])
 
             # Generate an embed message for the AppID
             if message_output is None:
-                emb = await utils.embed(ctx, f"Unable to access information for the game `{new_list['1']['app_name']}`",
+                emb = await utils.embed(interaction, f"Unable to access information for the game `{new_list['1']['app_name']}`",
                                         "This game/app is likely hidden and will not work.")
-                await ctx.send(embed=emb)
+                await interaction.edit_original_response(embed=emb)
 
             elif type(message_output) == dict:
-                emb = await self.create_embed(message_output, ctx, f"\nDone in {round(time.time() - start_time, 2)} seconds.")
-                await ctx.interaction.edit_original_message(content=None, embed=emb)
+                emb = await self.create_embed(message_output, interaction, f"\nDone in {round(time.time() - start_time, 2)} seconds.")
+                await interaction.edit_original_response(content=None, embed=emb)
         else:
-            await ctx.send(content=f"I couldn't find anything similar to that")
+            await interaction.edit_original_response(content=f"I couldn't find anything similar to that")
 
     # @commands.defer(ephemeral=False)
     # @steam.command(invoke_without_command=True)
@@ -267,12 +256,12 @@ class Steam(commands.Cog):
             return pickle.load(f)
 
 
-def setup(bot):
+async def setup(bot):
     print("INFO: Loading [Steam]... ", end="")
-    bot.add_cog(Steam(bot))
+    await bot.add_cog(Steam(bot))
     print("Done!")
 
 
-def teardown(bot):
+async def teardown(bot):
     print("INFO: Unloading [Steam]")
 
