@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import requests
 import json
 import datetime
@@ -8,58 +9,22 @@ import utils
 importlib.reload(utils)
 
 
-class XKCD(commands.Cog):
+class XKCD(commands.GroupCog, name='xkcd', description='Comics from xkcd.com.'):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(
-        aliases=[],
-        application_command_meta=commands.ApplicationCommandMeta(
-            options=[
-                discord.ApplicationCommandOption(
-                    name="comic",
-                    description="Obtain a comic by ID from xkcd.com",
-                    type=discord.ApplicationCommandOptionType.string,
-                    required=False,
-                ),
-                discord.ApplicationCommandOption(
-                    name="latest",
-                    description="Obtain the latest comic from xkcd.com",
-                    type=discord.ApplicationCommandOptionType.string,
-                    required=False,
-                ),
-            ],
-        )
-    )
-    async def xkcd(self, ctx, comic_id):
-        """Comics from xkcd.com."""
-
-    @xkcd.command(
-        aliases=[],
-        application_command_meta=commands.ApplicationCommandMeta(
-            options=[
-                discord.ApplicationCommandOption(
-                    name="comic_id",
-                    description="The ID for the xkcd comic you want.",
-                    type=discord.ApplicationCommandOptionType.integer,
-                    required=True,
-                ),
-            ],
-        )
-    )
-    async def comic(self, ctx, comic_id):
-        """Pull a comic from xkcd.com based on ID."""
+    @app_commands.command(name='comic', description='Pull a comic from xkcd.com based on ID.')
+    async def comic(self, interaction: discord.Interaction, comic_id: int):
         xkcd = await self.get_comic(f"https://xkcd.com/{comic_id}/info.0.json")
-        emb = await utils.embed(ctx, xkcd["title"], xkcd["description"], image=xkcd["image_url"], url=xkcd["url"].replace('info.0.json', ''))
-        await ctx.send(embed=emb)
+        emb = await utils.embed(interaction, xkcd["title"], xkcd["description"], image=xkcd["image_url"], url=xkcd["url"].replace('info.0.json', ''))
+        await interaction.response.send_message(embed=emb)
         return
 
-    @xkcd.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def latest(self, ctx):
-        """Pull the latest XKCD comic"""
+    @app_commands.command(name='latest', description='Pull the latest XKCD comic')
+    async def latest(self, interaction: discord.Interaction):
         xkcd = await self.get_comic("https://xkcd.com/info.0.json")
-        emb = await utils.embed(ctx, xkcd["title"], xkcd["description"], image=xkcd["image_url"], url=xkcd["url"])
-        await ctx.send(embed=emb)
+        emb = await utils.embed(interaction, xkcd["title"], xkcd["description"], image=xkcd["image_url"], url=xkcd["url"])
+        await interaction.response.send_message(embed=emb)
         return
 
     @staticmethod
@@ -80,11 +45,11 @@ class XKCD(commands.Cog):
             return None
 
 
-def setup(bot):
+async def setup(bot):
     print("INFO: Loading [XKCD]... ", end="")
-    bot.add_cog(XKCD(bot))
+    await bot.add_cog(XKCD(bot))
     print("Done!")
 
 
-def teardown(bot):
+async def teardown(bot):
     print("INFO: Unloading [XKCD]")
