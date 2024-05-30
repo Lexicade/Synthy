@@ -11,11 +11,6 @@ importlib.reload(utils)
 class Voice(commands.GroupCog, name="voice", description="Allow Synthy to create/delete channels as needed to keep things tidy"):
     def __init__(self, bot):
         self.bot = bot
-    # voice_commands = app_commands.Group(name='voice', description='Allow Synthy to create/delete channels as needed to keep things tidy')
-
-    # @commands.group()
-    # async def voice(self, ctx, *arg):
-    #     """Allow Synthy to create/delete channels as needed to keep things tidy"""
 
     @commands.has_permissions(administrator=True)
     @app_commands.command(name='setup', description='Create the initial voice channel')
