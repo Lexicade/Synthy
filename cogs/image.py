@@ -2,6 +2,7 @@ import math
 import re
 
 from discord.ext import commands
+from discord import app_commands
 import discord
 import os
 from io import BytesIO
@@ -21,48 +22,34 @@ import traceback
 importlib.reload(utils)
 
 
-class ImageCmd(commands.Cog):
+class ImageCmd(commands.Cog, name="Image"):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(
-        aliases=[],
-        application_command_meta=commands.ApplicationCommandMeta(
-            options=[
-                discord.ApplicationCommandOption(
-                    name="template_name",
-                    description="The name of the template.",
-                    type=discord.ApplicationCommandOptionType.string,
-                    required=True,
-                )
-            ],
-        )
-    )
-    @commands.defer(ephemeral=False)
+    @app_commands.command(name='image', description='A meme creating command. Use /imagelist for available templates.')
     @commands.bot_has_permissions(send_messages=True)
-    async def image(self, ctx, template_name):
-        """A meme creating command. Use /imagelist for available templates."""
+    async def image(self, interaction: discord.Interaction, template_name: str):
         # Check to see if the guild has it's own image folder
-        if not os.path.exists(f"./overlays/{ctx.guild.id}"):
-            os.mkdir(f"./overlays/{ctx.guild.id}")
-            os.mkdir(f"./overlays/{ctx.guild.id}/images")
+        if not os.path.exists(f"./overlays/{interaction.guild.id}"):
+            os.mkdir(f"./overlays/{interaction.guild.id}")
+            os.mkdir(f"./overlays/{interaction.guild.id}/images")
 
         templates = self.get_image_template_names_listed()
         print(f"templates {templates}")
         if template_name.casefold() not in templates:
-            await ctx.send(f"Image templates: {', '.join(templates)}")
+            await interaction.response.send_message(f"Image templates: {', '.join(templates)}")
             return
 
-        image = await self.get_image(ctx, "image")
+        image = await self.get_image(interaction.channel, "image")
         print(f"image {image}")
         if not image:
-            emb = await utils.embed(ctx, "No image found", "To use this command, an image must be within the 20 most recent messages.")
-            await ctx.send(embed=emb)
+            emb = await utils.embed(interaction, "No image found", "To use this command, an image must be within the 20 most recent messages.")
+            await interaction.response.send_message(embed=emb)
             return
 
-        overlay_return = await self.img_edit_overlay(image, template_name, ctx.guild.id, ctx)
+        overlay_return = await self.img_edit_overlay(image, template_name, interaction.guild.id, interaction)
         file = await self.pil_to_discordfile(overlay_return)
-        await ctx.send(file=file)
+        await interaction.response.send_message(file=file)
 
     @classmethod
     async def pil_to_discordfile(cls, file, filename='image.png'):
@@ -71,108 +58,42 @@ class ImageCmd(commands.Cog):
         temp_image.seek(0)
         return discord.File(fp=temp_image, filename=filename)
 
-    @commands.defer(ephemeral=True)
-    @commands.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def imagelist(self, ctx):
-        """Show all available templates to use with /image"""
+    @app_commands.command(name='imagelist', description='Show all available templates to use with /image')
+    async def imagelist(self, interaction: discord.InteractionMessage):
         image_list = ImageList()
         image_list.generate_image_list()
         file = await image_list.get_image_for_discord()
-        await ctx.send(file=file)
+        await interaction.response.send_message(file=file, ephemeral=True)
 
-    @commands.defer(ephemeral=False)
+    @app_commands.command(name='text', description='Add a caption to the last image posted.')
+    async def text(self, interaction: discord.InteractionMessage, top_text: str="", bottom_text: str=""):
+        print(f"given_values {interaction.given_values}")
+        text_data = {'top_text': "" if not 'top_text' in interaction.given_values else interaction.given_values['top_text'],
+                     'bottom_text': "" if not 'bottom_text' in interaction.given_values else interaction.given_values['bottom_text'],
+                     'avatar_url': interaction.author.avatar_url,
+                     'display_name': interaction.author.display_name,
+                     'username': interaction.author.name}
 
-    @commands.command(
-        aliases=[],
-        application_command_meta=commands.ApplicationCommandMeta(
-            options=[
-                discord.ApplicationCommandOption(
-                    name="top_text",
-                    description="Top text for this image.",
-                    type=discord.ApplicationCommandOptionType.string,
-                    required=False,
-                ),
-                discord.ApplicationCommandOption(
-                    name="bottom_text",
-                    description="Bottom text for this image.",
-                    type=discord.ApplicationCommandOptionType.string,
-                    required=False,
-                )
-            ],
-        )
-    )
-    async def text(self, ctx, top_text="", bottom_text=""):
-        """Add a caption to the last image posted."""
-        print(f"ctx {ctx}")
-        top_text = "" if not 'top_text' in ctx.given_values else ctx.given_values['top_text']
-        bottom_text = "" if not 'bottom_text' in ctx.given_values else ctx.given_values['bottom_text']
-        print(f"top_text {top_text}")
-        print(f"bottom_text {bottom_text}")
-        img = await self.get_image(ctx, "image")
+        img = await self.get_image(interaction, "image")
         try:
             if img:
-                img = await self.img_edit_add_text(img, top_text, bottom_text, ctx.guild.id)
+                img = await self.img_edit_add_text(img, text_data, interaction.guild.id)
                 file = await self.pil_to_discordfile(img)
-                await ctx.send(file=file)
+                await interaction.response.send_message(file=file, ephemeral=True)
 
             else:
-                emb = await utils.embed(ctx, f"Unable to retrieve image", "I wasn't able to see a image in the recent chat history.")
-                await ctx.send(embed=emb)
+                emb = await utils.embed(interaction, f"Unable to retrieve image", "I wasn't able to see a image in the recent chat history.")
+                await interaction.response.send_message(embed=emb, ephemeral=True)
         except Exception as e:
             traceback.print_exc()
             print(f"Error: {e}")
-            emb = await utils.embed(ctx, f"Error", e)
-            await ctx.send(embed=emb)
+            emb = await utils.embed(interaction, f"Error", e)
+            await interaction.response.send_message(embed=emb, ephemeral=True)
 
-    @commands.defer(ephemeral=False)
-    @commands.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def deep(self, ctx):
-        """Send the last image posted through a Deep Dream"""
-        print(f"ctx {ctx}")
-        img = await self.get_image(ctx, "url")
-        emb = await self.deep_master(ctx, img)
-        await ctx.send(embed=emb)
-
-    @commands.defer(ephemeral=False)
-    @commands.context_command(name="DeepAI - Deep Dream")
-    async def deep_context(self, ctx: discord.ext.commands.context.Context, message: discord.message.Message):
-        """Send the last image posted through a Deep Dream - Via Context Menu"""
-        if len(message.embeds) > 0 and message.embeds[0].image:
-            image = message.embeds[0].image.url
-        elif len(message.attachments) > 0:
-            image = message.attachments[0].url
-        else:
-            emb = await utils.embed(ctx, f"Unable to retrieve image", "I wasn't able to see an image in the message you selected.")
-            await ctx.send(embed=emb)
-            return
-
-        emb = await self.deep_master(ctx, image)
-        await ctx.send(embed=emb)
-
-    async def deep_master(self, ctx, img):
-        """Send the last image posted through a Deep Dream"""
-        start_time = time.time()
-
-        if img:
-            response = requests.post("https://api.deepai.org/api/deepdream",
-                                     headers={'api-key': os.environ.get('deep_ai_key', '')},
-                                     data={'image': img})
-            return_data = json.loads(response.text)
-
-            emb = await utils.embed(ctx,
-                                    title="Deep Dream",
-                                    message="",
-                                    footer=f"\nDone in {round(time.time() - start_time, 2)} seconds.",
-                                    image=return_data['output_url'])
-        else:
-            emb = await utils.embed(ctx, f"Unable to retrieve image", "I wasn't able to see a image in the recent chat history.")
-        return emb
-
-    @commands.defer(ephemeral=False)
-    @commands.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def intensify(self, ctx, intensity: int = 1):
+    @app_commands.command(name='intensify', description='Shake images with intensity and violence.')
+    async def intensify(self, interaction: discord.InteractionMessage, intensity: int = 1):
         """Shake images with intensity and violence."""
-        img = await self.get_image(ctx.channel, "image")
+        img = await self.get_image(interaction.channel, "image")
 
         img.paste(img, (0, 0))
 
@@ -222,10 +143,10 @@ class ImageCmd(commands.Cog):
             # first_frame.save("out.gif", save_all=True, append_images=frames, duration=30, loop=0, transparency=0, disposal=2)
 
             arr.seek(0)
-            await ctx.send(file=discord.File(arr, 'intensify.gif'))
+            await interaction.response.send_message(file=discord.File(arr, 'intensify.gif'))
             return
         else:
-            await ctx.send(content="Cannot find image.")
+            await interaction.response.send_message(content="Cannot find image.")
 
     async def get_image(self, channel: discord.TextChannel, return_as: str):
         image = None
@@ -295,29 +216,26 @@ class ImageCmd(commands.Cog):
         else:
             return None
 
-    @commands.defer(ephemeral=False)
-    @commands.command(hidden=True)
-    async def emboss(self, ctx, intensity=1):
-        """Image Effect: Emboss"""
-        img = await self.get_image(ctx.channel, "image")
-        file = await self.img_edit_effect(img, ImageFilter.EMBOSS, ctx, intensity)
-        await ctx.send(file=file)
-
-    @commands.defer(ephemeral=False)
-    @commands.command(hidden=True)
-    async def blur(self, ctx, intensity=1):
-        """Image Effect: Blur"""
-        img = await self.get_image(ctx.channel, "image")
-        file = await self.img_edit_effect(img, ImageFilter.BLUR, ctx, intensity)
-        await ctx.send(file=file)
-
-    @commands.defer(ephemeral=False)
-    @commands.command(hidden=True)
-    async def sharpen(self, ctx, intensity=1):
-        """Image Effect: Sharpen"""
-        img = await self.get_image(ctx.channel, "image")
-        file = await self.img_edit_effect(img, ImageFilter.SHARPEN, ctx, intensity)
-        await ctx.send(file=file)
+    # @app_commands.command(name='emboss', description='Image Effect: Emboss')
+    # async def emboss(self, interaction: discord.Interaction, intensity: int = 1):
+    #     """Image Effect: Emboss"""
+    #     img = await self.get_image(interaction.channel, "image")
+    #     file = await self.img_edit_effect(img, ImageFilter.EMBOSS, interaction, intensity)
+    #     await interaction.response.send_message(file=file)
+    #
+    # @app_commands.command(name='blur', description='Image Effect: Blur')
+    # async def blur(self, interaction: discord.Interaction, intensity: int = 1):
+    #     """Image Effect: Blur"""
+    #     img = await self.get_image(interaction.channel, "image")
+    #     file = await self.img_edit_effect(img, ImageFilter.BLUR, interaction, intensity)
+    #     await interaction.response.send_message(file=file)
+    #
+    # @app_commands.command(name='sharpen', description='Image Effect: Sharpen')
+    # async def sharpen(self, interaction: discord.Interaction, intensity: int = 1):
+    #     """Image Effect: Sharpen"""
+    #     img = await self.get_image(interaction.channel, "image")
+    #     file = await self.img_edit_effect(img, ImageFilter.SHARPEN, interaction, intensity)
+    #     await interaction.response.send_message(file=file)
 
     @staticmethod
     def is_url_image(url):
@@ -442,7 +360,7 @@ class ImageCmd(commands.Cog):
             fg_scaled_y_offset = round((fg_scaled_y - im_boundry[1]) / 2)
 
             # resize
-            fg = fg.resize((fg_scaled_x, fg_scaled_y), Image.ANTIALIAS)
+            fg = fg.resize((fg_scaled_x, fg_scaled_y), Image.LANCZOS)
 
             # Paste image
             img.paste(fg, (im_topleft[0] - fg_scaled_x_offset, im_topleft[1] - fg_scaled_y_offset),
@@ -450,34 +368,34 @@ class ImageCmd(commands.Cog):
             img.paste(bg, (0, 0), bg.convert('RGBA'))
 
         # elif image_overlay_type == 'frame':
-        else:
-            fg = Image.open(f"./config/images/{overlay_name}.png")
-            bg = Image.open(img)
-
-            img = Image.new("RGBA", bg.size)
-            str_filename = f"./config/images/{overlay_name}.png"
-
-            bg_width, bg_height = bg.size
-
-            fg_scaled_x, fg_scaled_y = fg.size
-            fg_scaled_x = float(fg_scaled_x / 100)
-            fg_scaled_y = float(fg_scaled_y / 100)
-
-            max_image_width = 15
-
-            while fg_scaled_x < ((bg_width / 100) * max_image_width):
-                fg_scaled_x = fg_scaled_x + float(fg_scaled_x / 100)
-                fg_scaled_y = fg_scaled_y + float(fg_scaled_y / 100)
-
-            fg_scaled_x = int(fg_scaled_x)
-            fg_scaled_y = int(fg_scaled_y)
-
-            # resize
-            fg = fg.resize((fg_scaled_x, fg_scaled_y), Image.ANTIALIAS)
-
-            # Paste image
-            img.paste(bg, (0, 0), bg.convert('RGBA'))
-            img.paste(fg, (0, 0), fg.convert('RGBA'))
+        # else:
+        #     fg = Image.open(f"./config/images/{overlay_name}.png")
+        #     bg = Image.open(img)
+        #
+        #     img = Image.new("RGBA", bg.size)
+        #     str_filename = f"./config/images/{overlay_name}.png"
+        #
+        #     bg_width, bg_height = bg.size
+        #
+        #     fg_scaled_x, fg_scaled_y = fg.size
+        #     fg_scaled_x = float(fg_scaled_x / 100)
+        #     fg_scaled_y = float(fg_scaled_y / 100)
+        #
+        #     max_image_width = 15
+        #
+        #     while fg_scaled_x < ((bg_width / 100) * max_image_width):
+        #         fg_scaled_x = fg_scaled_x + float(fg_scaled_x / 100)
+        #         fg_scaled_y = fg_scaled_y + float(fg_scaled_y / 100)
+        #
+        #     fg_scaled_x = int(fg_scaled_x)
+        #     fg_scaled_y = int(fg_scaled_y)
+        #
+        #     # resize
+        #     fg = fg.resize((fg_scaled_x, fg_scaled_y), Image.ANTIALIAS)
+        #
+        #     # Paste image
+        #     img.paste(bg, (0, 0), bg.convert('RGBA'))
+        #     img.paste(fg, (0, 0), fg.convert('RGBA'))
 
         # img.save(str_filename)
         return img
@@ -534,13 +452,13 @@ class ImageCmd(commands.Cog):
         return boundry_size, top_left
 
 
-def setup(bot):
+async def setup(bot):
     print("INFO: Loading [Image]... ", end="")
-    bot.add_cog(ImageCmd(bot))
+    await bot.add_cog(ImageCmd(bot))
     print("Done!")
 
 
-def teardown(bot):
+async def teardown(bot):
     print("INFO: Unloading [Image]")
 
 
@@ -605,9 +523,10 @@ class ImageList:
             self.image.paste(image_template, (self.x_offset + centering_image_x, self.y_offset), mask=image_template)
 
             d = ImageDraw.Draw(self.image)
-            font = ImageFont.truetype("./fonts/roboto/Roboto-Regular.ttf", 10)
+            font_size = 10
+            font = ImageFont.truetype("./fonts/roboto/Roboto-Regular.ttf", font_size)
             font_colour = (255, 255, 255, 255)
-            name_w, name_h = d.textsize(image_name, font=font)
+            name_w = d.textlength(image_name, font=font)
 
             d.text((self.x_offset + (100-name_w)/2, self.y_offset+80), image_name, font=font, fill=font_colour)
 
