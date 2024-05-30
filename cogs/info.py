@@ -1,4 +1,5 @@
 from discord.ext import commands, tasks
+from discord import app_commands
 import datetime
 import discord
 import importlib
@@ -6,7 +7,7 @@ import utils
 importlib.reload(utils)
 
 
-class DiscordInfo(commands.Cog):
+class DiscordInfo(commands.GroupCog, name='info', description='Get information about users or the Discord server.'):
     def __init__(self, bot):
         self.bot = bot
         # https://discordpy.readthedocs.io/en/latest/ext/tasks/
@@ -29,34 +30,11 @@ class DiscordInfo(commands.Cog):
             except discord.HTTPException as e:
                 print(f"HTTPException error during initial invite info: {e}")
 
-    @commands.group(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def info(self, ctx):
-        """Get information about users or the Discord server."""
-        prefix = await self.bot.get_prefix(ctx.message)
-        emb = await utils.embed(ctx, f"Commands for {prefix[2]}info", "info you can get information about a user or server.")
-        emb = await utils.field(emb, f"{prefix[2]}info server", "Provides information about the Discord server.")
-        emb = await utils.field(emb, f"{prefix[2]}info user [username]", "Provides information about the given user.")
-        await ctx.send(embed=emb)
-
-    @commands.defer(ephemeral=False)
-    @info.command(
-        aliases=[],
-        application_command_meta=commands.ApplicationCommandMeta(
-            options=[
-                discord.ApplicationCommandOption(
-                    name="user",
-                    description="Tells you some info about the member.",
-                    type=discord.ApplicationCommandOptionType.user,
-                    required=True,
-                ),
-            ]
-        )
-    )
-    async def user(self, ctx, user: discord.Member):
-        """Tells you some info about the member."""
+    @app_commands.command(name='user', description='Get information about a user.')
+    async def user(self, interaction: discord.Interaction, user: discord.Member):
         print(f"member")
         print(f"member: {user}")
-        emb = await utils.embed(ctx, "", "", thumbnail=user.avatar.url)
+        emb = await utils.embed(interaction, "", "", thumbnail=user.avatar.url)
         emb = await utils.author(emb, user.name)
         emb = await utils.field(emb, "Roles:", value=str(len(user.roles)-1))
         emb = await utils.field(emb, "Created At:", value=user.created_at.strftime("%d %B %Y - %H:%M:%S"))
@@ -64,29 +42,26 @@ class DiscordInfo(commands.Cog):
         emb = await utils.field(emb, "Top Role:", value=user.top_role)
         emb = await utils.field(emb, "Bot:", value=user.bot)
         # emb = await utils.thumb(emb, member.avatar_url)
-        await ctx.send(embed=emb)
+        await interaction.response.send_message(embed=emb)
 
-    @info.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def server(self, ctx):
-        """Tells you some info about the guild."""
+    @app_commands.command(name='server', description='Get information about the Discord server.')
+    async def server(self, interaction: discord.Interaction):
 
-        emb = await utils.embed(ctx, "", "")
-        emb = await utils.field(emb, "Owner:", ctx.guild.owner)
-        emb = await utils.field(emb, "Created:", ctx.guild.created_at.strftime("%d %B %Y"))
-        emb = await utils.field(emb, "Stats:", value=f"{len(ctx.guild.categories)} categories\n"
-                                                     f"{len(ctx.guild.text_channels)} text channels\n"
-                                                     f"{len(ctx.guild.voice_channels)} voice channels.\n"
-                                                     f"{ctx.guild.member_count} members.\n"
-                                                     f"{len(ctx.guild.roles)} roles.\n"
-                                                     f"{len(ctx.guild.emojis)} emojis.\n")
-        await ctx.send(embed=emb)
+        emb = await utils.embed(interaction, "", "")
+        emb = await utils.field(emb, "Owner:", interaction.guild.owner)
+        emb = await utils.field(emb, "Created:", interaction.guild.created_at.strftime("%d %B %Y"))
+        emb = await utils.field(emb, "Stats:", value=f"{len(interaction.guild.categories)} categories\n"
+                                                     f"{len(interaction.guild.text_channels)} text channels\n"
+                                                     f"{len(interaction.guild.voice_channels)} voice channels.\n"
+                                                     f"{interaction.guild.member_count} members.\n"
+                                                     f"{len(interaction.guild.roles)} roles.\n"
+                                                     f"{len(interaction.guild.emojis)} emojis.\n")
+        await interaction.response.send_message(embed=emb)
 
-    @info.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def bot(self, ctx):
-        """Tells you some info about the bot."""
-
-        emb = await utils.embed(ctx, "Synthy Info - bot", f"Currently serving {len(self.bot.guilds)} guilds.")
-        await ctx.send(embed=emb)
+    @app_commands.command(name='bot', description='Get information about the bot.')
+    async def bot(self, interaction: discord.Interaction):
+        emb = await utils.embed(interaction, "Synthy Info - bot", f"Currently serving {len(self.bot.guilds)} guilds.")
+        await interaction.response.send_message(embed=emb)
         print(self.bot.guilds)
 
     @commands.Cog.listener()
@@ -177,11 +152,11 @@ class DiscordInfo(commands.Cog):
                 print(f"[INFO]on_guild_remove:{guild.id}: {e}")
 
     @commands.group(invoke_without_command=True)
-    async def details(self, ctx):
+    async def details(self, interaction: discord.Interaction):
         """Configure join/quit notices."""
         # Get guilds prefix
-        prefix = await self.bot.get_prefix(ctx.message)
-        chan_id = await utils.sql('SELECT channel_id FROM "database1".synthy.invitedetails WHERE guild_id = %s;', (ctx.guild.id,))
+        prefix = await self.bot.get_prefix(interaction.message)
+        chan_id = await utils.sql('SELECT channel_id FROM "database1".synthy.invitedetails WHERE guild_id = %s;', (interaction.guild.id,))
 
         if chan_id:
             obj_channel = self.bot.get_channel(chan_id[0]["channel_id"])
@@ -190,31 +165,31 @@ class DiscordInfo(commands.Cog):
             cur_channel = ""
 
         # Create message
-        emb = await utils.embed(ctx, f"Help for `{prefix[2]}details`",
+        emb = await utils.embed(interaction, f"Help for `{prefix[2]}details`",
                                      "The details feature allows me to post extra info when a user joins to a " +
                                      "channel, like who joined, what invite was used and who owns that invite.")
         emb = await utils.field(emb, f"{prefix[2]}details set",
                                      f"Use this command in the channel you want me to post in.{cur_channel}")
         emb = await utils.field(emb, f"{prefix[2]}details clear",
                                      "Use this command to stop me posting join and leave messages.")
-        await ctx.send(embed=emb)
+        await interaction.response.send_message(embed=emb)
 
-    @details.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def set(self, ctx):
-        await utils.sql('INSERT INTO "database1".synthy.invitedetails (guild_id, channel_id) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET channel_id = %s;', (ctx.guild.id, ctx.channel.id, ctx.channel.id,))
-        await ctx.send(f"I will put extra details into #{ctx.channel.name}.")
+    @app_commands.command(name='set', description='Set the channel for join/leave messages.')
+    async def set(self, interaction: discord.Interaction):
+        await utils.sql('INSERT INTO "database1".synthy.invitedetails (guild_id, channel_id) VALUES (%s, %s) ON CONFLICT (guild_id) DO UPDATE SET channel_id = %s;', (interaction.guild.id, interaction.channel.id, interaction.channel.id,))
+        await interaction.response.send_message(f"I will put extra details into #{interaction.channel.name}.")
 
-    @details.command(aliases=[], application_command_meta=commands.ApplicationCommandMeta(options=[]))
-    async def clear(self, ctx):
-        await utils.sql('DELETE FROM "database1".synthy.invitedetails WHERE guild_id = %s;', (ctx.guild.id,))
-        await ctx.send(f"Channel has been cleared.")
+    @app_commands.command(name='clear', description='Clear the channel for join/leave messages.')
+    async def clear(self, interaction: discord.Interaction):
+        await utils.sql('DELETE FROM "database1".synthy.invitedetails WHERE guild_id = %s;', (interaction.guild.id,))
+        await interaction.response.send_message(f"Channel has been cleared.")
 
 
-def setup(bot):
+async def setup(bot):
     print("INFO: Loading [Info]... ", end="")
-    bot.add_cog(DiscordInfo(bot))
+    await bot.add_cog(DiscordInfo(bot))
     print("Done!")
 
 
-def teardown():
+async def teardown():
     print("INFO: Unloading [Info]")
