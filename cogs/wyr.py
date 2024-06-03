@@ -24,7 +24,7 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
         sql = CustomSQL()
         await sql.run_sql('INSERT INTO "database1".synthy.wyr (guild_id, wyr_option, added_by) VALUES (%s, %s, %s);',
                           (interaction.guild.id, wyr_option, interaction.user.id,))
-        await interaction.response.send_message("Would you rather...")
+        await interaction.response.send_message("This has been saved for this server.", ephemeral=True)
 
     @app_commands.command(name='ask', description="Pose a would you rather.")
     async def ask(self, interaction: discord.Interaction):
