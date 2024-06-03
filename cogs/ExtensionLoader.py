@@ -193,7 +193,7 @@ class ExtensionLoader(commands.Cog, name="ExtensionLoader"):
             await ctx.send(embed=emb)
 
             # Create developer error
-            err_chnl = self.bot.get_channel(740267554416885842)  # Synthy Server / #debug-synthy-beta
+            err_chnl = self.bot.get_channel(1247193944429695018)  # Synthy Server / #debug-synthy-beta
             # err_chnl = self.bot.get_channel(1138216297046491247)  # Lexi Server 2 / #john
 
             err_body_details = [f'Guild: {ctx.guild.name} ({ctx.guild.id})',
