@@ -24,9 +24,15 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
     @app_commands.command(name='ask', description="Pose a would you rather.")
     async def ask(self, interaction: discord.Interaction):
         options = await self.sql.run_sql('SELECT wyr_option, added_by from database1.synthy.wyr WHERE guild_id = %s ORDER BY random() LIMIT 2;', (interaction.guild.id, ))
-        emb = await utils.embed(interaction,
-                                "Would you rather",
-                                f":one: {options[0]['wyr_option']}\n<@{options[0]['added_by']}>\n\nOR\n\n:two: {options[1]['wyr_option']}\n<@{options[1]['added_by']}>")
+        print(f"total options: {len(options)}")
+        if len(options) == 2:
+            emb = await utils.embed(interaction,
+                                    "Would you rather",
+                                    f":one: {options[0]['wyr_option']}\n<@{options[0]['added_by']}>\n\nOR\n\n:two: {options[1]['wyr_option']}\n<@{options[1]['added_by']}>")
+        else:
+            emb = await utils.embed(interaction,
+                                    "Would you rather",
+                                    f"WYR needs at least 2 options and there are currently {len(options)}. Add some more with `/wyr addnew`.")
         await interaction.response.send_message(embed=emb)
 
     @app_commands.command(name='remove', description="Remove one of your options.")
