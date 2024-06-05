@@ -74,4 +74,5 @@ class Dropdown(discord.ui.Select):
         sql = CustomSQL()
         await sql.run_sql('DELETE FROM database1.synthy.wyr WHERE guild_id = %s and added_by = %s and wyr_option = %s;',
                           (interaction.guild.id, interaction.user.id, self.values[0]))
-        await interaction.response.send_message(f'Removed: `{self.values[0]}`', ephemeral=True)
+
+        await interaction.response.edit_message(content=f"Removed: `{self.values[0]}`", view=None)
