@@ -8,7 +8,6 @@ from utils import CustomSQL
 importlib.reload(utils)
 
 
-
 class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
     def __init__(self, bot):
         self.sql = CustomSQL()
