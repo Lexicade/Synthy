@@ -1,14 +1,7 @@
-import os
-import uuid
-
-import psycopg2
 from discord.ext import commands
-from discord import app_commands, ui
+from discord import app_commands
 import discord
 import importlib
-
-# from psycopg2 import extras
-# extras.register_uuid()
 
 import utils
 from utils import CustomSQL
