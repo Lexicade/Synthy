@@ -38,6 +38,14 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
         view = DropdownView(options=options)
         await interaction.response.send_message('Pick your favourite colour:', view=view, ephemeral=True)
 
+    @app_commands.command(name='stats', description="Remove one of your options.")
+    async def stats(self, interaction: discord.Interaction):
+        sql_data = await self.sql.run_sql('select count(wyr_option) from database1.synthy.wyr where guild_id = %s;', (interaction.guild.id,))
+        wyr_count = sql_data[0]['count']
+
+        emb = await utils.embed(interaction, "Would you rather", f"Total options on this server: {sql_data[0]['count']}")
+        await interaction.response.send_message(embed=emb)
+
 
 async def setup(bot):
     print("INFO: Loading [WYR]... ", end="")
