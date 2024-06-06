@@ -15,7 +15,7 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
         self.bot = bot
 
     @app_commands.command(name='addnew', description="Add a new would you rather option for this server.")
-    async def addnew(self, interaction: discord.Interaction, wyr_option: str):
+    async def addnew(self, interaction: discord.Interaction, wyr_option:  app_commands.Range[str, 1, 250]):
         sql = CustomSQL()
         await sql.run_sql('INSERT INTO "database1".synthy.wyr (guild_id, wyr_option, added_by) VALUES (%s, %s, %s);',
                           (interaction.guild.id, wyr_option, interaction.user.id,))
@@ -37,10 +37,10 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
 
     @app_commands.command(name='remove', description="Remove one of your options.")
     async def remove(self, interaction: discord.Interaction):
-        raw_options = await self.sql.run_sql('SELECT wyr_option, added_by from database1.synthy.wyr WHERE guild_id = %s and added_by = %s ORDER BY wyr_option;', (interaction.guild.id, interaction.user.id))
-        options = []
-        for option in raw_options:
-            options.append(option['wyr_option'])
+        options = await self.sql.run_sql('SELECT wyr_id, wyr_option, added_by from database1.synthy.wyr WHERE guild_id = %s and added_by = %s ORDER BY wyr_option;', (interaction.guild.id, interaction.user.id))
+        # options = []
+        # for option in raw_options:
+        #     options.append(option['wyr_option'])
         view = DropdownView(options=options)
         await interaction.response.send_message('Choose one of your options to remove:', view=view, ephemeral=True)
 
@@ -79,14 +79,21 @@ class Dropdown(discord.ui.Select):
     def __init__(self, options_list: list):
         options = []
         for i in range(0, len(options_list)):
-            options.append(discord.SelectOption(label=options_list[i]))
+            options.append(discord.SelectOption(value=options_list[i]['wyr_id'], label=str(options_list[i]['wyr_option'][:100])))
 
-        print(f"Options: {options}")
+        # print(f"Options: {options}")
         super().__init__(placeholder='Pick an option...', min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         sql = CustomSQL()
-        await sql.run_sql('DELETE FROM database1.synthy.wyr WHERE guild_id = %s and added_by = %s and wyr_option = %s;',
+
+        # print(f"self.values: {self.values}")
+        # print(f"interaction.data: {interaction.data}")
+
+        option_selected = await sql.run_sql('SELECT wyr_option from database1.synthy.wyr WHERE guild_id = %s and added_by = %s and wyr_id = %s ORDER BY wyr_option;',
+                                    (interaction.guild.id, interaction.user.id, self.values[0]))
+
+        await sql.run_sql('DELETE FROM database1.synthy.wyr WHERE guild_id = %s and added_by = %s and wyr_id = %s;',
                           (interaction.guild.id, interaction.user.id, self.values[0]))
 
-        await interaction.response.edit_message(content=f"Removed: `{self.values[0]}`", view=None)
+        await interaction.response.edit_message(content=f"Removed: `{option_selected[0]['wyr_option']}`", view=None)
