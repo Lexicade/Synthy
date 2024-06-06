@@ -24,7 +24,7 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
     @app_commands.command(name='ask', description="Pose a would you rather.")
     async def ask(self, interaction: discord.Interaction):
         options = await self.sql.run_sql('SELECT wyr_option, added_by from database1.synthy.wyr WHERE guild_id = %s ORDER BY random() LIMIT 2;', (interaction.guild.id, ))
-        print(f"total options: {len(options)}")
+        # print(f"total options: {len(options)}")
         if len(options) == 2:
             emb = await utils.embed(interaction,
                                     "Would you rather",
@@ -42,7 +42,7 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
         for option in raw_options:
             options.append(option['wyr_option'])
         view = DropdownView(options=options)
-        await interaction.response.send_message('Pick your favourite colour:', view=view, ephemeral=True)
+        await interaction.response.send_message('Choose one of your options to remove:', view=view, ephemeral=True)
 
     @app_commands.command(name='stats', description="Remove one of your options.")
     async def stats(self, interaction: discord.Interaction):
@@ -79,10 +79,10 @@ class Dropdown(discord.ui.Select):
     def __init__(self, options_list: list):
         options = []
         for i in range(0, len(options_list)):
-            print(options_list[i])
             options.append(discord.SelectOption(label=options_list[i]))
 
-        super().__init__(placeholder='Choose one of your options to remove...', min_values=1, max_values=1, options=options)
+        print(f"Options: {options}")
+        super().__init__(placeholder='Pick an option...', min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         sql = CustomSQL()
