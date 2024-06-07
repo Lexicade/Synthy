@@ -8,7 +8,6 @@ from utils import CustomSQL
 importlib.reload(utils)
 
 
-
 class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
     def __init__(self, bot):
         self.sql = CustomSQL()
@@ -19,8 +18,9 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
         sql = CustomSQL()
         await sql.run_sql('INSERT INTO "database1".synthy.wyr (guild_id, wyr_option, added_by) VALUES (%s, %s, %s);',
                           (interaction.guild.id, wyr_option, interaction.user.id,))
-        await interaction.response.send_message("This has been saved for this server.", ephemeral=True)
+        await interaction.response.send_message("This has been saved for this server.", ephemeral=True)  # noqa
 
+    @commands.cooldown(1, 4, commands.BucketType.guild)
     @app_commands.command(name='ask', description="Pose a would you rather.")
     async def ask(self, interaction: discord.Interaction):
         options = await self.sql.run_sql('SELECT wyr_option, added_by from database1.synthy.wyr WHERE guild_id = %s ORDER BY random() LIMIT 2;', (interaction.guild.id, ))
@@ -29,11 +29,17 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
             emb = await utils.embed(interaction,
                                     "Would you rather",
                                     f":one: {options[0]['wyr_option']}\n<@{options[0]['added_by']}>\n\nOR\n\n:two: {options[1]['wyr_option']}\n<@{options[1]['added_by']}>")
+            await interaction.response.send_message(embed=emb)  # noqa
+            sent_messsage = await interaction.original_response()
+            await sent_messsage.add_reaction("1️⃣")
+            await sent_messsage.add_reaction("2️⃣")
+            await sent_messsage.add_reaction("👍")
+            await sent_messsage.add_reaction("👎")
         else:
             emb = await utils.embed(interaction,
                                     "Would you rather",
                                     f"WYR needs at least 2 options and there are currently {len(options)}. Add some more with `/wyr addnew`.")
-        await interaction.response.send_message(embed=emb)
+            await interaction.response.send_message(embed=emb)  # noqa
 
     @app_commands.command(name='remove', description="Remove one of your options.")
     async def remove(self, interaction: discord.Interaction):
@@ -42,15 +48,13 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
         # for option in raw_options:
         #     options.append(option['wyr_option'])
         view = DropdownView(options=options)
-        await interaction.response.send_message('Choose one of your options to remove:', view=view, ephemeral=True)
+        await interaction.response.send_message('Choose one of your options to remove:', view=view, ephemeral=True)  # noqa
 
     @app_commands.command(name='stats', description="Remove one of your options.")
     async def stats(self, interaction: discord.Interaction):
         sql_data = await self.sql.run_sql('select count(wyr_option) from database1.synthy.wyr where guild_id = %s;', (interaction.guild.id,))
-        wyr_count = sql_data[0]['count']
-
         emb = await utils.embed(interaction, "Would you rather", f"Total options on this server: {sql_data[0]['count']}")
-        await interaction.response.send_message(embed=emb)
+        await interaction.response.send_message(embed=emb)  # noqa
 
 
 async def setup(bot):
@@ -91,9 +95,9 @@ class Dropdown(discord.ui.Select):
         # print(f"interaction.data: {interaction.data}")
 
         option_selected = await sql.run_sql('SELECT wyr_option from database1.synthy.wyr WHERE guild_id = %s and added_by = %s and wyr_id = %s ORDER BY wyr_option;',
-                                    (interaction.guild.id, interaction.user.id, self.values[0]))
+                                            (interaction.guild.id, interaction.user.id, self.values[0]))
 
         await sql.run_sql('DELETE FROM database1.synthy.wyr WHERE guild_id = %s and added_by = %s and wyr_id = %s;',
                           (interaction.guild.id, interaction.user.id, self.values[0]))
 
-        await interaction.response.edit_message(content=f"Removed: `{option_selected[0]['wyr_option']}`", view=None)
+        await interaction.response.edit_message(content=f"Removed: `{option_selected[0]['wyr_option']}`", view=None)  # noqa
