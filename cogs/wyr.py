@@ -31,12 +31,11 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
                                     f":one: {options[0]['wyr_option']}\n<@{options[0]['added_by']}>\n\n"
                                     f"OR\n\n"
                                     f":two: {options[1]['wyr_option']}\n<@{options[1]['added_by']}>\n\n"
-                                    f"", footer="\nVote with: 1️⃣ / 2️⃣ \nRate options with 👍 / 👎")
+                                    f"", footer="\nVote with: 1️⃣ / 2️⃣ \nIf the option(s) are bad, vote with: 👎")
             await interaction.response.send_message(embed=emb)  # noqa
             sent_messsage = await interaction.original_response()
             await sent_messsage.add_reaction("1️⃣")
             await sent_messsage.add_reaction("2️⃣")
-            await sent_messsage.add_reaction("👍")
             await sent_messsage.add_reaction("👎")
         else:
             emb = await utils.embed(interaction,
