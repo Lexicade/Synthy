@@ -103,3 +103,4 @@ class Dropdown(discord.ui.Select):
                           (interaction.guild.id, interaction.user.id, self.values[0]))
 
         await interaction.response.edit_message(content=f"Removed: `{option_selected[0]['wyr_option']}`", view=None)  # noqa
+
