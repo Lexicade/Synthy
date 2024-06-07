@@ -8,7 +8,6 @@ wikipedia~=1.4.0
 beautifulsoup4~=4.9.3
 python-dateutil~=2.8.1
 upsidedown~=0.4
-# novus==0.2.3
 discord==2.3.2
 ratelimit~=2.2.1
 fabric
