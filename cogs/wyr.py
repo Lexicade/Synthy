@@ -28,7 +28,10 @@ class WYR(commands.GroupCog, name="wyr", description="Would you rather?"):
         if len(options) == 2:
             emb = await utils.embed(interaction,
                                     "Would you rather",
-                                    f":one: {options[0]['wyr_option']}\n<@{options[0]['added_by']}>\n\nOR\n\n:two: {options[1]['wyr_option']}\n<@{options[1]['added_by']}>")
+                                    f":one: {options[0]['wyr_option']}\n<@{options[0]['added_by']}>\n\n"
+                                    f"OR\n\n"
+                                    f":two: {options[1]['wyr_option']}\n<@{options[1]['added_by']}>\n\n"
+                                    f"", footer="\nVote with: 1️⃣ / 2️⃣ \nRate options with 👍 / 👎")
             await interaction.response.send_message(embed=emb)  # noqa
             sent_messsage = await interaction.original_response()
             await sent_messsage.add_reaction("1️⃣")
